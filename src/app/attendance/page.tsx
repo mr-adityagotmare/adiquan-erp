@@ -156,10 +156,18 @@ const toggleAll = async (present: boolean) => {
     timestamp: new Date().toISOString(),
   }));
 
-  const { error } = await supabase.from("attendance").upsert(records, {
-    onConflict: ["student_id", "course_id", "date"],
+//   const { error } = await supabase.from("attendance").upsert(records, {
+//     onConflict: ["student_id", "course_id", "date"],
+//     ignoreDuplicates: false,
+//   });
+
+  const { error } = await supabase
+  .from("attendance")
+  .upsert([records], {
+    onConflict: "student_id,course_id,date", // <-- string, not array
     ignoreDuplicates: false,
   });
+
 
   if (error) console.error("Error saving batch attendance:", error.message);
   else fetchAttendance(selectedCourse, selectedDate);
