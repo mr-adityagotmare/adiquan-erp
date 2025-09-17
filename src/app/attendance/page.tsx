@@ -115,10 +115,20 @@ const toggleAttendance = async (studentId: number) => {
     timestamp: new Date().toISOString(),
   };
 
-  const { error } = await supabase.from("attendance").upsert([record], {
-    onConflict: ["student_id", "course_id", "date"], // must match unique constraint
+const { error } = await supabase
+  .from("attendance")
+  .upsert([record], {
+    onConflict: ["student_id", "course_id", "date"], // use column names
     ignoreDuplicates: false,
   });
+
+if (error) {
+  console.error("Error saving attendance:", error.message);
+//   alert(`Error saving attendance: ${error.message}`);
+} else {
+//   alert("Attendance saved ✅");
+}
+
 
   if (error) console.error("Error saving attendance:", error.message);
   else fetchAttendance(selectedCourse, selectedDate);
