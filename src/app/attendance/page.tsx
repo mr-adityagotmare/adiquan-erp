@@ -118,9 +118,10 @@ const toggleAttendance = async (studentId: number) => {
 const { error } = await supabase
   .from("attendance")
   .upsert([record], {
-    onConflict: ["student_id", "course_id", "date"], // use column names
+    onConflict: "student_id,course_id,date", // <-- string, not array
     ignoreDuplicates: false,
   });
+
 
 if (error) {
   console.error("Error saving attendance:", error.message);
