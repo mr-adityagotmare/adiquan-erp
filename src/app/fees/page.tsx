@@ -3,10 +3,37 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
+// ---- Type Definitions ----
+interface Course {
+  id: string;
+  name: string;
+}
+
+interface Teacher {
+  id: string;
+  name: string;
+}
+
+interface Fee {
+  id: string | null;
+  total_amount: number;
+  paid_amount: number;
+  status: "Paid" | "Pending";
+  updated_at: string | null;
+  updated_by: string | null;
+}
+
+interface Student {
+  id: string;
+  name: string;
+  fees: Fee[];
+}
+
+// ---- Component ----
 export default function FeesPage() {
-  const [courses, setCourses] = useState<any[]>([]);
-  const [students, setStudents] = useState<any[]>([]);
-  const [teachers, setTeachers] = useState<any[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [selectedTeacher, setSelectedTeacher] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -19,7 +46,7 @@ export default function FeesPage() {
         .select("id, name")
         .eq("status", "Active");
       if (error) console.error("Error fetching courses:", error.message);
-      else setCourses(data || []);
+      else setCourses((data as Course[]) || []);
     };
     fetchCourses();
   }, []);
@@ -32,7 +59,7 @@ export default function FeesPage() {
         .select("id, name")
         .eq("status", "Active");
       if (error) console.error("Error fetching teachers:", error.message);
-      else setTeachers(data || []);
+      else setTeachers((data as Teacher[]) || []);
     };
     fetchTeachers();
   }, []);
@@ -63,7 +90,7 @@ export default function FeesPage() {
         .eq("course_id", selectedCourse);
 
       if (error) console.error("Error fetching students with fees:", error.message);
-      else setStudents(data || []);
+      else setStudents((data as Student[]) || []);
 
       setLoading(false);
     };
@@ -71,13 +98,18 @@ export default function FeesPage() {
   }, [selectedCourse]);
 
   // Update fee for a student
-  const updateFee = async (studentId: string, feeId: string | null, total: number, paid: number) => {
+  const updateFee = async (
+    studentId: string,
+    feeId: string | null,
+    total: number,
+    paid: number
+  ) => {
     if (!selectedTeacher) {
       alert("Please select a teacher before saving fees");
       return;
     }
 
-    const status = paid >= total ? "Paid" : "Pending";
+    const status: Fee["status"] = paid >= total ? "Paid" : "Pending";
 
     let query;
     if (feeId) {
@@ -88,7 +120,7 @@ export default function FeesPage() {
           total_amount: total,
           paid_amount: paid,
           status,
-          updated_by: selectedTeacher, // use selected teacher
+          updated_by: selectedTeacher,
           updated_at: new Date(),
         })
         .eq("id", feeId);
@@ -169,16 +201,16 @@ export default function FeesPage() {
           </thead>
           <tbody>
             {students.map((s) => {
-              const fee = s.fees?.[0] || {
-                id: null,
-                total_amount: 0,
-                paid_amount: 0,
-                status: "Pending",
-                updated_at: null,
-                updated_by: null,
-              };
+              const fee: Fee =
+                s.fees?.[0] || {
+                  id: null,
+                  total_amount: 0,
+                  paid_amount: 0,
+                  status: "Pending",
+                  updated_at: null,
+                  updated_by: null,
+                };
 
-              // Find teacher name if updated_by exists
               const teacherName = fee.updated_by
                 ? teachers.find((t) => t.id === fee.updated_by)?.name || fee.updated_by
                 : "-";
